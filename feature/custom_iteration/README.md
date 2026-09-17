@@ -43,7 +43,7 @@ wanxiang-custom-iteration-module/
    * 编译产物包名自动重命名为 `top.wanxiang.app.dev`，应用名显示为 `WanXiangDev`；
    * 测试版与手机中的正式版万象共存运行、互不覆盖。
 5. **开源 PR 交付闭环**：
-   * 本地真机体验通过后，Agent 协助生成标准格式 PR 提交到 `TensorHub-ORG/WanXiang:main`。
+   * 本地真机体验通过后，Agent 协助生成标准格式 PR 提交到 `peakSee/Wanxiang:main`。
 
 ---
 
