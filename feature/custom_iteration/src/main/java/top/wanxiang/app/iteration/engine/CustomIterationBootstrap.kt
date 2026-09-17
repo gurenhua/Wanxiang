@@ -5,7 +5,7 @@ import java.io.File
 
 /**
  * CustomIterationBootstrap — 万象自定义迭代环境自举引擎。
- * 
+ *
  * 职责：
  * 1. 准备沙盒内隔离的源码工作区路径 `~/custom_wanxiang`；
  * 2. 将预置的 `wanxiang-custom-iteration` Skill 部署至 Agent 的技能目录；
@@ -16,6 +16,10 @@ object CustomIterationBootstrap {
 
     const val WORKSPACE_NAME = "custom_wanxiang"
     const val OFFICIAL_REPO = "https://github.com/peakSee/Wanxiang"
+
+    /** 模块 assets 中预置资产的相对路径（与 assets/skills、assets/templates 一一对应）。 */
+    private const val ASSET_SKILL = "skills/wanxiang-custom-iteration/SKILL.md"
+    private const val ASSET_WORKFLOW = "templates/workflows/wanxiangdev-build.yml"
 
     const val BOOTSTRAP_PROMPT = """我准备在万象（WanXiang）的手机 Linux 虚拟沙盒中进行 WanXiang 自定义迭代。
 
@@ -49,6 +53,9 @@ object CustomIterationBootstrap {
 
     /**
      * 初始化自定义迭代环境与工作区。
+     *
+     * 除创建目录骨架外，还会把模块 assets 内预置的 Skill 与 CI 工作流模板
+     * 真正落盘：否则 Agent 在会话中读不到规范文件，模板也无从复用。
      */
     fun bootstrap(context: Context, rootfsHomeDir: File): BootstrapResult {
         try {
@@ -58,17 +65,13 @@ object CustomIterationBootstrap {
                 workspaceDir.mkdirs()
             }
 
-            // 2. 部署 Skill 目录
+            // 2. 部署 Agent Skill（目录 + 文件内容）
             val skillDir = File(rootfsHomeDir, ".wanxiang/skills/wanxiang-custom-iteration")
-            if (!skillDir.exists()) {
-                skillDir.mkdirs()
-            }
+            copyAsset(context, ASSET_SKILL, File(skillDir, "SKILL.md"))
 
-            // 3. 部署工作流模板缓存目录
+            // 3. 部署工作流模板缓存，供 Agent 克隆后复制进 .github/workflows
             val templatesDir = File(rootfsHomeDir, ".wanxiang/templates/workflows")
-            if (!templatesDir.exists()) {
-                templatesDir.mkdirs()
-            }
+            copyAsset(context, ASSET_WORKFLOW, File(templatesDir, "wanxiangdev-build.yml"))
 
             return BootstrapResult(
                 success = true,
@@ -82,6 +85,18 @@ object CustomIterationBootstrap {
                 prompt = "",
                 errorMessage = e.message ?: "Bootstrap failed"
             )
+        }
+    }
+
+    /**
+     * 把 assets 中的单个文件流式拷贝到目标路径（自动建父目录、覆盖旧内容）。
+     */
+    private fun copyAsset(context: Context, assetPath: String, target: File) {
+        target.parentFile?.mkdirs()
+        context.assets.open(assetPath).use { input ->
+            target.outputStream().use { output ->
+                input.copyTo(output)
+            }
         }
     }
 
